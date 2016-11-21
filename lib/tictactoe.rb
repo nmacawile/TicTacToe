@@ -24,14 +24,14 @@ module Tictactoe
   end
 
   class Board
-  	@@first_turn = :player1
-  	attr_accessor :players, :grid, :current_player
+  	attr_accessor :players, :grid, :first_turn, :current_player
 
   	def initialize(player1, player2)
   		@grid = []
   		new_grid 
   		@players = [player1, player2]
-  		@current_player = @@first_turn
+  		@first_turn = :player1
+  		@current_player = :player1
   	end
 
   	def new_grid
@@ -44,7 +44,7 @@ module Tictactoe
 	end
 
   	def play
-  		loop do
+  		loop do  
 	  		draw_board
 	  		loop do
 				player_turn
@@ -52,10 +52,10 @@ module Tictactoe
 				break if game_over?
 				switch_player
 	  		end
-	  		#@@first_turn = switch_player(@@first_turn)
-	  		#current_player = @@first_turn
 	  		show_scores
 	  		new_grid
+	  		alternate_first_turn
+	  		switch_player if first_turn != current_player
 	  		print "Play again? (Type in 'Y' to play again): "
 	  		play_again = gets.chomp.upcase
 	  		break unless play_again == "Y"
@@ -125,6 +125,15 @@ module Tictactoe
   			self.current_player = :player2
   		when :player2
   			self.current_player = :player1
+  		end
+  	end
+
+	 def alternate_first_turn
+  		case first_turn
+  		when :player1
+  			self.first_turn = :player2
+  		when :player2
+  			self.first_turn = :player1
   		end
   	end
 
