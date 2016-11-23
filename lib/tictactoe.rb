@@ -1,4 +1,5 @@
 require "./tictactoe/version"
+require "./ai"
 require "colorize"
 
 module Tictactoe
@@ -13,17 +14,21 @@ module Tictactoe
     end
 
     def mark(symbol)
-    	if value.nil?
-    		self.value = symbol
-    	end
+    		self.value = symbol if empty?
+    end
+
+    def empty?
+    	self.value.nil?
     end
 
     def to_s
-    	value.nil? ? index.to_s.colorize(:light_black) : value.to_s
+    	empty? ? index.to_s.colorize(:light_black) : value.to_s
     end
   end
 
   class Board
+  	PATTERNS = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]]
+
   	attr_accessor :players, :grid, :first_turn, :current_player
 
   	def initialize(player1, player2)
@@ -74,22 +79,34 @@ module Tictactoe
   	def player_turn
   		current_player_index = player_index[current_player]
   		turn = nil
-  		loop do
-	  		print "#{players[current_player_index].name}'s turn "\
-	  		"(#{players[current_player_index].symbol}): "
-	  		turn = gets.chomp.to_i
-	  		break if turn.between?(1, 9) && grid[map(turn)].value.nil? 
-	  		puts "Invalid move!"
-  		end	
-  		grid[map(turn)].mark(players[current_player_index].symbol)  		
+
+  		unless players[current_player_index].ai
+	  		loop do
+		  		print "#{players[current_player_index].name}'s turn "\
+		  		"(#{players[current_player_index].symbol}): "
+
+		  		input = gets.chomp.to_i
+		  		turn = map(input)
+		  		break if turn.between?(0, 8) && grid[turn].empty? 
+		  		puts "Invalid move!"
+	  		end
+	  	else
+
+	  		turn = ai_turn
+	  		puts "#{players[current_player_index].name}'s turn "\
+		  		"(#{players[current_player_index].symbol}): #{turn}"
+  		end
+
+  		grid[turn].mark(players[current_player_index].symbol) 
+  		
   	end
 
   	def game_over?
-  		draw? || winner?
+  		winner? || draw?
   	end
 
   	def draw?
-  		if grid.none? { |cell| cell.value.nil? }
+  		if grid.none? { |cell| cell.empty? }
   			puts "It's a draw."
   			true
   		else
@@ -111,6 +128,7 @@ module Tictactoe
   			grid[0..2].all?(&winning_pattern) ||
   			grid[3..5].all?(&winning_pattern) ||
   			grid[6..8].all?(&winning_pattern)
+  			
   			players[current_player_index].score += 1
  			puts "#{players[current_player_index].name} wins!"
   			true
@@ -160,12 +178,13 @@ module Tictactoe
   end
 
   class Player
-  	attr_accessor :name, :score, :symbol
+  	attr_accessor :name, :score, :symbol, :ai
 
-  	def initialize(name, symbol)
+  	def initialize(name, symbol, ai_param=false)
   		@name = name  		
   		@symbol = symbol
   		@score = 0
+  		@ai = ai_param
   	end
   end
 end
